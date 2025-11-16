@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ORDER_STATUS, PAYMENT_METHODS } from "../Constants/constants.js";
 
 const orderSchema = new mongoose.Schema(
   {
@@ -6,15 +7,16 @@ const orderSchema = new mongoose.Schema(
     course_ID: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
 
     amount: Number,
+
     status: {
       type: String,
-      enum: ["pending", "completed", "cancelled"],
-      default: "pending",
+      enum: Object.values(ORDER_STATUS),
+      default: ORDER_STATUS.PENDING,
     },
 
     paymentMethod: {
       type: String,
-      enum: ["visa", "paypal", "wallet", "cod"],
+      enum: Object.values(PAYMENT_METHODS),
     },
 
     coupon_ID: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },

@@ -1,28 +1,21 @@
 import mongoose from "mongoose";
+import { TOKEN_TYPES } from "../Constants/constants.js";
 
 const blacklistTokenSchema = new mongoose.Schema(
   {
-    token: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+    token: { type: String, required: true, unique: true },
 
     type: {
       type: String,
-      enum: ["access", "refresh"],
-      default: "access",
+      enum: Object.values(TOKEN_TYPES),
+      default: TOKEN_TYPES.ACCESS,
     },
 
-    expiresAt: {
-      type: Date,
-      required: true,
-    },
+    expiresAt: { type: Date, required: true },
   },
   { timestamps: true }
 );
 
-// TTL Index → document auto-delete after expiration
 blacklistTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default mongoose.models.BlacklistToken ||

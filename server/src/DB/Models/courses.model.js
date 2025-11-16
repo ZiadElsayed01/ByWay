@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { COURSE_STATUS } from "../Constants/constants.js";
 
 const courseSchema = new mongoose.Schema(
   {
@@ -21,7 +22,11 @@ const courseSchema = new mongoose.Schema(
       },
     ],
 
-    status: { type: String, enum: ["draft", "published"], default: "draft" },
+    status: {
+      type: String,
+      enum: Object.values(COURSE_STATUS),
+      default: COURSE_STATUS.DRAFT,
+    },
 
     price: Number,
     discount: Number,

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { USER_ROLES, LANGUAGE_TYPES } from "../Constants/constants.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -10,23 +11,21 @@ const userSchema = new mongoose.Schema(
 
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+
     image: String,
 
     language: {
       type: String,
-      enum: ["en", "ar"],
-      default: "en",
+      enum: Object.values(LANGUAGE_TYPES),
+      default: LANGUAGE_TYPES.EN,
     },
 
-    links: {
-      type: [String],
-      default: [],
-    },
+    links: { type: [String], default: [] },
 
     role: {
       type: String,
-      enum: ["student", "instructor", "admin"],
-      default: "student",
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.STUDENT,
     },
 
     isPrivate: { type: Boolean, default: false },

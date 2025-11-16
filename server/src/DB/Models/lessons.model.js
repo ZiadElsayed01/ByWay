@@ -6,6 +6,7 @@ const lessonSchema = new mongoose.Schema(
 
     title: { type: String, required: true },
     description: String,
+
     link: String,
     duration: Number,
 
