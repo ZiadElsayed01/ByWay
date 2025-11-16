@@ -3,7 +3,7 @@ import { TOKEN_TYPES } from "../Constants/constants.js";
 
 const blacklistTokenSchema = new mongoose.Schema(
   {
-    token: { type: String, required: true, unique: true },
+    tokenId: { type: String, required: true, unique: true },
 
     type: {
       type: String,
