@@ -28,11 +28,10 @@ export const register = async (req, res) => {
   const verifyEmailToken = jwt.sign(
     { id: newUser._id, email },
     process.env.JWT_VERIFY_EMAIL_SECRET,
-    {
-      expiresIn: "1h",
-    }
+    { expiresIn: "1h" }
   );
 
+  newUser.verificationToken = verifyEmailToken;
   newUser.verificationTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
   await newUser.save();
 
@@ -64,7 +63,7 @@ export const verifyEmail = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.verificationTokenExpiry < decoded.iat) {
+    if (Date.now() > user.verificationTokenExpiry) {
       return res.status(400).json({ message: "Token expired" });
     }
 
@@ -77,6 +76,7 @@ export const verifyEmail = async (req, res) => {
       {
         $set: { isVerified: true },
         $unset: {
+          verificationToken: "",
           verificationTokenExpiry: "",
         },
       }
@@ -86,4 +86,46 @@ export const verifyEmail = async (req, res) => {
   } catch (error) {
     return res.status(400).json({ message: "Invalid or expired token" });
   }
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const user = await usersModel.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "Invalid email or password" });
+  }
+
+  if (!user.isVerified) {
+    return res
+      .status(400)
+      .json({ message: "Cannot login, verify your email first" });
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(400).json({ message: "Invalid email or password" });
+  }
+
+  const token = jwt.sign(
+    { id: user._id, email },
+    process.env.JWT_SECRET_LOGIN,
+    { expiresIn: "1h" }
+  );
+
+  const refreshToken = jwt.sign(
+    { id: user._id, email },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return res.status(200).json({
+    message: "Login successful",
+    token,
+    refreshToken,
+  });
 };
