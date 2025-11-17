@@ -30,8 +30,12 @@ const userSchema = new mongoose.Schema(
 
     isPrivate: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+
     verificationToken: String,
     verificationTokenExpiry: Date,
+
+    otp: String,
+    otpExpiry: Date,
   },
   { timestamps: true }
 );

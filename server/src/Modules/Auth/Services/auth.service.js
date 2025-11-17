@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { verifyEmailTemplate } from "../../../Utils/verify.email.template.js";
 import emitter from "../../../Services/send.email.service.js";
+import cryptoJS from "crypto-js";
+import { verifyOTPTemplate } from "../../../Utils/verify.otp.template.js";
 
 export const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -128,4 +130,108 @@ export const login = async (req, res) => {
     token,
     refreshToken,
   });
+};
+
+export const sentOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const user = await usersModel.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "email not found" });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const encryptedOTP = cryptoJS.AES.encrypt(
+    otp,
+    process.env.ENCRYPT_SECRET
+  ).toString();
+
+  user.otp = encryptedOTP;
+  user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+  await user.save();
+
+  emitter.emit("sendEmail", {
+    to: email,
+    subject: "OTP Verification",
+    html: verifyOTPTemplate(otp),
+  });
+
+  return res.status(200).json({ message: "OTP sent successfully" });
+};
+
+export const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required" });
+  }
+
+  const user = await usersModel.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "email not found" });
+  }
+
+  if (Date.now() > user.otpExpiry) {
+    return res.status(400).json({ message: "OTP expired" });
+  }
+
+  const decryptedOTP = cryptoJS.AES.decrypt(
+    user.otp,
+    process.env.ENCRYPT_SECRET
+  ).toString(cryptoJS.enc.Utf8);
+
+  if (decryptedOTP !== otp) {
+    return res.status(400).json({ message: "Invalid OTP" });
+  }
+
+  await usersModel.updateOne(
+    { _id: user._id },
+    {
+      $unset: {
+        otp: "",
+        otpExpiry: "",
+      },
+    }
+  );
+
+  return res.status(200).json({ message: "OTP verified successfully" });
+};
+
+export const forgetPassword = async (req, res) => {
+  const { email, newPassword, confirmNewPassword } = req.body;
+
+  if (!email || !newPassword || !confirmNewPassword) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  const user = await usersModel.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "email not found" });
+  }
+
+  const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  if (isSamePassword) {
+    return res
+      .status(400)
+      .json({ message: "New password cannot be same as old password" });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, +process.env.SALT);
+
+  await usersModel.updateOne(
+    { _id: user._id },
+    {
+      $set: { password: hashedPassword },
+    }
+  );
+
+  return res.status(200).json({ message: "Password reset successfully" });
 };
