@@ -13,7 +13,7 @@ import { errorHandlerMiddleware } from "../../Middlewares/error.handler.middlewa
 const authRouter = Router();
 
 authRouter.post("/register", errorHandlerMiddleware(register));
-authRouter.get("/verify/:token", errorHandlerMiddleware(verifyEmail));
+authRouter.post("/verify/:token", errorHandlerMiddleware(verifyEmail));
 authRouter.post("/login", errorHandlerMiddleware(login));
 authRouter.post("/send-otp", errorHandlerMiddleware(sendOTP));
 authRouter.post("/verify-otp", errorHandlerMiddleware(verifyOTP));

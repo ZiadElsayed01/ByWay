@@ -51,6 +51,7 @@ export const register = async (req, res) => {
 
   return res.status(201).json({
     message: "User created successfully, check your email for verification",
+    verifyEmailToken,
   });
 };
 
