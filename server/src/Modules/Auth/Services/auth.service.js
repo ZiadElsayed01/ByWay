@@ -235,3 +235,26 @@ export const forgetPassword = async (req, res) => {
 
   return res.status(200).json({ message: "Password reset successfully" });
 };
+
+export const refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
+
+  const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+  const user = await usersModel.findById(decoded.id);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const token = jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET_LOGIN,
+    { expiresIn: "1h" }
+  );
+
+  return res.status(200).json({ token });
+};
