@@ -11,9 +11,9 @@ import { TOKEN_TYPES } from "../../../Constants/constants.js";
 uuidv4();
 
 export const register = async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, role } = req.body;
 
-  if (!firstName || !lastName || !email || !password) {
+  if (!firstName || !lastName || !email || !password || !role) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
@@ -29,6 +29,7 @@ export const register = async (req, res) => {
     lastName,
     email,
     password: hashedPassword,
+    role,
   });
 
   const verifyEmailToken = jwt.sign(
